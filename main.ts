@@ -54,6 +54,14 @@ function main() {
   const onDisk = statSync(dest).size;
   if (onDisk !== bytes.length) fail("round-trip size mismatch");
 
+  // Guardrail: re-parse the copy itself — the output must stand alone as a
+  // valid 1024x1024 PNG, not merely hash like the source.
+  const copiedSize = pngSize(copied);
+  if (copiedSize.width !== WANT_W || copiedSize.height !== WANT_H) {
+    fail(`output is ${copiedSize.width}x${copiedSize.height}, expected ${WANT_W}x${WANT_H}`);
+  }
+  if (!copied.subarray(0, 8).equals(PNG_MAGIC)) fail("output is not a PNG");
+
   console.log(`ok: wrote ${dest} (${onDisk} bytes, ${width}x${height}, sha256 ${after})`);
 }
 
